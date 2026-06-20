@@ -1,8 +1,9 @@
 import { Router } from 'express';
-import { booklists, getBookById } from '../models/books.js';
+import createError from 'http-errors';
+import { booklists, createBook, getBookById } from '../models/books.js';
 
 import { parse } from '../lib/validate.js';
-import { idSchema, listQuerySchema } from '../lib/schemas.js';
+import { idSchema, listQuerySchema, createBookSchema } from '../lib/schemas.js';
 
 const router = Router();
 
@@ -19,6 +20,18 @@ router.get('/:id', async (req, res) => {
     res.json({ book });
   } catch (error) {
     if (err.message === 'Book not found') throw createError(404, 'Book not found');
+    throw error;
+  }
+})
+
+router.post('/', async (req, res) => {
+  const input = parse(createBookSchema, req.body);
+
+  try {
+    const createdBook = await createBook(input);
+    res.status(201).json({ id: createdBook.id });
+  } catch (error) {
+    if (error.message === 'duplicate') throw createError(409, 'Book with the same title and author already exists');
     throw error;
   }
 })

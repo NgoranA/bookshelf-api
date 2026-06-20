@@ -18,3 +18,14 @@ export async function getBookById(id) {
   if (rows.length === 0) throw new Error('Book not found');
   return rows[0];
 }
+
+
+export async function createBook({ title, author, genre, published_date, status, owner_id }) {
+  try {
+    const { rows } = await db.query('INSERT INTO books (title, author, genre, published_date, status, owner_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id', [title, author, genre, published_date, status, owner_id]);
+    return rows[0];
+  } catch (error) {
+    if (error.code === '23505') throw new Error('duplicate');
+    throw error;
+  }
+}
