@@ -1,7 +1,15 @@
 import { db } from '../config/db.js';
 
-export async function booklists() {
-  const { rows } = await db.query('SELECT * FROM books');
+export async function booklists({ after = 0, limit = 20, status, q }) {
+  const conditions = ['id > $1'];
+  const params = [after];
+
+  if (status) { params.push(status); conditions.push(`status = $${params.length}`); }
+
+  if (q) { params.push(q); conditions.push(`(title ILIKE '%' ||  $${params.length} || '%' OR author ILIKE '%' || $${params.length} || '%')`) }
+
+  params.push(limit);
+  const { rows } = await db.query(`SELECT id, title, author, genre, status, created_at FROM books WHERE ${conditions.join(' AND ')} ORDER BY id ASC LIMIT $${params.length}`, params);
   return rows;
 }
 
