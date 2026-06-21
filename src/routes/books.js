@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import createError from 'http-errors';
-import { booklists, createBook, getBookById } from '../models/books.js';
+import { booklists, createBook, getBookById, updateBook, deleteBook, replaceBook } from '../models/books.js';
 
 import { parse } from '../lib/validate.js';
-import { idSchema, listQuerySchema, createBookSchema } from '../lib/schemas.js';
+import { idSchema, listQuerySchema, createBookSchema, updateBookSchema } from '../lib/schemas.js';
 
 const router = Router();
 
@@ -34,6 +34,33 @@ router.post('/', async (req, res) => {
     if (error.message === 'duplicate') throw createError(409, 'Book with the same title and author already exists');
     throw error;
   }
+})
+
+router.put('/:id', async (req, res) => {
+  const id = parse(idSchema, req.params.id);
+  const input = parse(createBookSchema, req.body, 422);
+  try {
+    res.json(await replaceBook(id, input));
+  } catch (error) {
+    if (error.message === 'Book not found') throw createError(404, 'Book not found');
+    if (error.message === 'duplicate') throw createError(409, 'Book with the same title and author already exists');
+    throw error;
+  }
+})
+
+
+router.patch('/:id', async (req, res) => {
+  const id = parse(idSchema, req.params.id);
+  const fields = parse(updateBookSchema, req.body, 422);
+  try {
+    res.json(await updateBook(id, fields));
+  } catch (error) {
+    if (error.message === 'Book not found') throw createError(404, 'Book not found');
+    if (error.message === 'duplicate') throw createError(409, 'Book with the same title and author already exists');
+    if (error.message === 'No fields to update') throw createError(400, 'No fields to update');
+    throw error;
+  }
+
 })
 
 export default router;

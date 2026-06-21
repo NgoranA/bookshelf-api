@@ -29,3 +29,51 @@ export async function createBook({ title, author, genre, published_date, status,
     throw error;
   }
 }
+
+export async function replaceBook(id, { title, author, genre, published_date, status }) {
+  try {
+    const { rows } = await db.query('UPDATE books SET title = $1, author = $2, genre = $3, published_date = $4, status = $5 WHERE id = $6 RETURNING id', [title, author, genre, published_date, status, id]);
+    if (rows.length === 0) throw new Error('Book not found');
+    return rows[0];
+  } catch (error) {
+    if (error.code === '23505') throw new Error('duplicate');
+    throw error;
+  }
+}
+
+
+export async function updateBook(id, fields) {
+  const allowedFields = ['title', 'author', 'genre', 'published_date', 'status'];
+  const sets = []
+  const params = [id]
+  for (key in allowedFields) {
+    if (key in fields) { params.push(fields[key]); sets.push(`${key} = $${params.length}`) }
+  }
+  if (sets.length === 0) throw new Error('No fields to update');
+  try {
+    const { rows } = await db.query(`UPDATE books SET ${sets.join(', ')} WHERE id = $1 RETURNING *`, params);
+    if (rows.length === 0) throw new Error('Book not found');
+    return rows[0];
+  } catch (error) {
+    if (error.code === '23505') throw new Error('duplicate');
+    throw error;
+  }
+}
+
+export async function deleteBook(id) {
+  const { rowCount } = await db.query('DELETE FROM books WHERE id = $1', [id]);
+  if (rowCount === 0) throw new Error('Book not found');
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

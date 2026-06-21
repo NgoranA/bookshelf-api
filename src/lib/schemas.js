@@ -21,3 +21,11 @@ export const createBookSchema = z.object({
   genre: z.string().trim().min(1).max(100).optional(),
   owner_id: z.coerce.number().int().positive()
 })
+
+
+export const updateBookSchema = z.object({
+  title: z.string().trim().min(1).max(255).optional(),
+  author: z.string().trim().min(1).max(255).optional(),
+  status: statusEnum,
+  genre: z.string().trim().min(1).max(100).optional(),
+}).partial()
