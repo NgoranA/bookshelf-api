@@ -14,14 +14,16 @@ import { db } from '../db.js'
 
 // The columns we return for a book, listed once so every query agrees.
 // (owner_id is intentionally NOT returned — it's always "you".)
-const BOOK_COLUMNS = 'id, title, author, genre, status, rating, created_at'
+// `my_rating` is the OWNER'S own score for the book — distinct from reviews.rating,
+// which belongs to each individual review and feeds average_review_rating below.
+const BOOK_COLUMNS = 'id, title, author, genre, status, my_rating, created_at'
 
 // List the OWNER'S books with optional filters and keyset pagination.
 //
 // Keyset pagination: instead of OFFSET (which makes the database walk and throw
 // away every skipped row), we remember the last id we saw and ask for "id > that".
 // It stays fast no matter how deep the page is.
-export async function list ({ ownerId, after = 0, limit = 20, status, q }) {
+export async function list({ ownerId, after = 0, limit = 20, status, q }) {
   // We build the WHERE clause dynamically, but EVERY value still goes through a
   // $1/$2 placeholder. We are never gluing user input into the SQL string.
   const conditions = ['owner_id = $1', 'id > $2']
@@ -56,7 +58,7 @@ export async function list ({ ownerId, after = 0, limit = 20, status, q }) {
 
 // Read one of the owner's books, enriched with how many reviews it has and their
 // average rating. LEFT JOIN keeps the book even when it has zero reviews.
-export async function read (id, ownerId) {
+export async function read(id, ownerId) {
   const { rows } = await db.query(
     `SELECT b.id, b.title, b.author, b.genre, b.status, b.rating, b.created_at,
             COUNT(r.id)::int AS review_count,
@@ -73,7 +75,7 @@ export async function read (id, ownerId) {
   return rows[0]
 }
 
-export async function create ({ title, author, genre, status, rating, ownerId }) {
+export async function create({ title, author, genre, status, rating, ownerId }) {
   try {
     const { rows } = await db.query(
       `INSERT INTO books (owner_id, title, author, genre, status, rating)
@@ -91,7 +93,7 @@ export async function create ({ title, author, genre, status, rating, ownerId })
 }
 
 // PUT = full replace. The client sends the whole book; every column is set.
-export async function replace (id, { title, author, genre, status, rating }, ownerId) {
+export async function replace(id, { title, author, genre, status, rating }, ownerId) {
   try {
     const { rows } = await db.query(
       `UPDATE books
@@ -112,7 +114,7 @@ export async function replace (id, { title, author, genre, status, rating }, own
 // sent (Zod stripped anything unknown). We build the SET clause from a fixed
 // ALLOWLIST of column names — never from user-supplied keys — so there is no way
 // to update a column we didn't intend to.
-export async function update (id, fields, ownerId) {
+export async function update(id, fields, ownerId) {
   const allowed = ['title', 'author', 'genre', 'status', 'rating']
 
   // $1 = id, $2 = ownerId; updatable values start at $3.
@@ -144,7 +146,7 @@ export async function update (id, fields, ownerId) {
   }
 }
 
-export async function remove (id, ownerId) {
+export async function remove(id, ownerId) {
   // rowCount tells us how many rows the statement touched. 0 means the book
   // didn't exist OR isn't yours — either way, 404. No separate SELECT needed.
   const { rowCount } = await db.query(
@@ -164,7 +166,7 @@ export async function remove (id, ownerId) {
 //     is as if none of them ever happened — no half-imported list.
 //   - finally { client.release() } ALWAYS returns the connection to the pool.
 //     Forgetting this is the classic "pool leak" that hangs a service.
-export async function createMany (booksInput, ownerId) {
+export async function createMany(booksInput, ownerId) {
   const client = await db.connect()
   try {
     await client.query('BEGIN')

@@ -41,11 +41,12 @@ export const newBookSchema = z.object({
     .max(120, 'author is too long (max 120 characters)'),
   genre: z.string().min(1).max(60).optional(),
   status: statusEnum.default('want_to_read'),
-  rating: z
+  // The owner's OWN score for the book (distinct from a review's rating).
+  my_rating: z
     .number()
-    .int('rating must be a whole number')
-    .min(1, 'rating must be between 1 and 5')
-    .max(5, 'rating must be between 1 and 5')
+    .int('my_rating must be a whole number')
+    .min(1, 'my_rating must be between 1 and 5')
+    .max(5, 'my_rating must be between 1 and 5')
     .nullable()
     .optional()
 })
@@ -58,7 +59,7 @@ export const updateBookSchema = z
     author: z.string().min(1).max(120),
     genre: z.string().min(1).max(60).nullable(),
     status: statusEnum,
-    rating: z.number().int().min(1).max(5).nullable()
+    my_rating: z.number().int().min(1).max(5).nullable()
   })
   .partial()
 
