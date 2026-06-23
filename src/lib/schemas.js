@@ -29,3 +29,21 @@ export const updateBookSchema = z.object({
   status: statusEnum,
   genre: z.string().trim().min(1).max(100).optional(),
 }).partial()
+
+export const newReviewSchema = z.object({
+  reviewer_id: z.coerce.number().int().positive(),
+  book_id: z.coerce.number().int().positive(),
+  rating: z.coerce.number().int().min(1).max(5),
+  comment: z.string().trim().min(1).max(1000).optional(),
+})
+
+
+export const importSchema = z.object({
+  books: z.array(createBookSchema).min(1, { message: "At least one book is required" }).max(1000, { message: "Maximum 1000 books are allowed" })
+})
+
+
+
+
+
+

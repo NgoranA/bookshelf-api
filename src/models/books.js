@@ -66,6 +66,25 @@ export async function deleteBook(id) {
 }
 
 
+export async function importBooks(books) {
+  const client = await db.connect();
+  try {
+    await client.query('BEGIN');
+    const createdBooks = [];
+    for (const book of books) {
+      const { rows } = await client.query('INSERT INTO books (title, author, genre, published_date, status, owner_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id', [book.title, book.author, book.genre, book.published_date, book.status, book.owner_id]);
+      createdBooks.push(rows[0]);
+    }
+    await client.query('COMMIT');
+    return createdBooks;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    if (error.code === '23505') throw new Error('duplicate');
+    throw error
+  } finally {
+    client.release();
+  }
+}
 
 
 

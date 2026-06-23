@@ -1,17 +1,14 @@
 import { Router } from 'express';
 import createError from 'http-errors';
-import { booklists, createBook, getBookById, updateBook, deleteBook, replaceBook } from '../models/books.js';
+import { importBooks, booklists, createBook, getBookById, updateBook, deleteBook, replaceBook } from '../models/books.js';
 
 import { parse } from '../lib/validate.js';
 import { idSchema, listQuerySchema, createBookSchema, updateBookSchema } from '../lib/schemas.js';
+import { booklistController } from '../controllers/books/booklists.js';
 
 const router = Router();
 
-router.get('/', async (req, res) => {
-  const { after, limit, status, q } = parse(listQuerySchema, req.query);
-  const books = await booklists({ after, limit, status, q });
-  res.json({ items: books, next: books.length === limit ? books.at(-1).id : null });
-})
+router.get('/', booklistController)
 
 router.get('/:id', async (req, res) => {
   const id = parse(idSchema, req.params.id);
@@ -60,7 +57,27 @@ router.patch('/:id', async (req, res) => {
     if (error.message === 'No fields to update') throw createError(400, 'No fields to update');
     throw error;
   }
-
 })
 
+router.delete('/:id', async (req, res) => {
+  const id = parse(idSchema, req.params.id);
+  try {
+    await deleteBook(id);
+    res.status(204).end();
+  } catch (error) {
+    if (error.message === 'Book not found') throw createError(404, 'Book not found');
+    throw error;
+  }
+})
+
+router.post("/import", async (req, res) => {
+  const { books } = parse(importSchema, req.body, 422);
+  try {
+    const created = await importBooks(books);
+    res.status(201).json({ created });
+  } catch (error) {
+    if (error.message === 'duplicate') throw createError(409, 'Book with the same title and author already exists');
+    throw error;
+  }
+})
 export default router;

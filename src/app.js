@@ -1,6 +1,7 @@
 import express from 'express';
 import createError from "http-errors";
 import bookRoutes from './routes/books.js';
+import reviewRoutes from './routes/reviews.js';
 
 export function createApp() {
   const app = express();
@@ -13,6 +14,8 @@ export function createApp() {
   })
 
   app.use('/books', bookRoutes);
+  app.use('/books/:bookId/reviews', reviewRoutes);
+
 
 
   app.use((req, res, next) => {
