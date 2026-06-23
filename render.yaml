@@ -1,0 +1,36 @@
+# render.yaml — a "Blueprint" that tells Render.com how to deploy this API
+# together with a managed PostgreSQL database, with NO Docker required.
+#
+# How it works:
+#   - runtime: node  → Render installs Node, runs the build, then the start command.
+#   - It creates a free Postgres database and injects its connection string as
+#     DATABASE_URL (we never hard-code credentials).
+#   - It generates a random JWT_SECRET for you (used to sign login tokens).
+#   - Before each deploy it runs the migration (safe: CREATE TABLE IF NOT EXISTS).
+#   - It checks /health to know the service is live.
+#
+# See docs/06-deployment.md for the click-by-click walkthrough.
+
+services:
+  - type: web
+    name: bookshelf-api
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: node src/server.js
+    healthCheckPath: /health
+    # Runs once before traffic is sent to the new version (creates tables if needed).
+    preDeployCommand: node scripts/migrate.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true          # Render makes a strong random secret
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bookshelf-db
+          property: connectionString
+
+databases:
+  - name: bookshelf-db
+    plan: free

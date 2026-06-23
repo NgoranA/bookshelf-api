@@ -1,8 +1,13 @@
-import { readFileSync } from 'node:fs';
-import { db } from '../src/config/db.js';
+// scripts/seed.js — insert the sample rows from db/seed.sql.
+//
+// Run this once after migrating a fresh database. Running it repeatedly will
+// insert duplicate rows — for a clean slate use `npm run db:reset` instead.
 
-const seed = readFileSync(new URL('../db/seed.sql', import.meta.url), 'utf-8');
+import { readFileSync } from 'node:fs'
+import { db } from '../src/db.js'
 
-await db.query(seed);
-console.log('Database seeded successfully!');
-await db.end();
+const seed = readFileSync(new URL('../db/seed.sql', import.meta.url), 'utf8')
+
+await db.query(seed)
+console.log('✅ Seed complete (sample books and reviews inserted).')
+await db.end()

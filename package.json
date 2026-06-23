@@ -1,35 +1,36 @@
 {
   "name": "bookshelf-api",
   "version": "1.0.0",
-  "description": "",
+  "description": "A RESTful JSON API for tracking books on your reading shelf. Teaching reference for the 'Building Services with Node.js' live session.",
+  "type": "module",
   "main": "src/server.js",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node --env-file=.env src/server.js",
     "dev": "node --env-file=.env --watch src/server.js",
     "db:migrate": "node --env-file=.env scripts/migrate.js",
     "db:seed": "node --env-file=.env scripts/seed.js",
+    "db:reset": "node --env-file=.env scripts/reset-db.js",
     "pretest": "node --env-file=.env.test scripts/reset-db.js",
     "test": "node --env-file=.env.test --test"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "packageManager": "pnpm@10.22.0",
-  "type": "module",
   "dependencies": {
-    "cors": "^2.8.6",
-    "express": "^5.2.1",
-    "express-rate-limit": "^8.5.2",
-    "helmet": "^8.2.0",
-    "http-errors": "^2.0.1",
-    "pg": "^8.22.0",
-    "pino": "^10.3.1",
-    "pino-http": "^11.0.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "express-rate-limit": "^7.4.1",
+    "helmet": "^8.0.0",
+    "http-errors": "^2.0.0",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.13.1",
+    "pino": "^9.5.0",
+    "pino-http": "^10.3.0",
     "swagger-ui-express": "^5.0.1",
-    "yaml": "^2.9.0",
-    "zod": "^4.4.3"
+    "yaml": "^2.6.1",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
-    "pino-pretty": "^13.1.3"
+    "pino-pretty": "^13.0.0"
   }
 }

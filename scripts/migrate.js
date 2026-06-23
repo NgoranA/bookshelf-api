@@ -1,13 +1,16 @@
-import { readFileSync } from 'node:fs';
-import { db } from '../src/config/db.js';
+// scripts/migrate.js — create the tables if they don't exist yet.
+//
+// This is SAFE to run on every deploy / every boot, because schema.sql uses
+// "CREATE TABLE IF NOT EXISTS". It never drops data. Use this in production.
+//
+//   npm run db:migrate        (locally, via .env)
+//   node scripts/migrate.js   (in production, env injected by the platform)
 
-try {
-  const seed = readFileSync(new URL("../db/schemas.sql", import.meta.url), 'utf-8');
+import { readFileSync } from 'node:fs'
+import { db } from '../src/db.js'
 
-  await db.query(seed);
-  console.log('Database migrated successfully!');
-  await db.end();
-} catch (error) {
-  console.error('Error migrating database:', error);
+const schema = readFileSync(new URL('../db/schema.sql', import.meta.url), 'utf8')
 
-}
+await db.query(schema)
+console.log('✅ Migration complete (tables are ready).')
+await db.end()
