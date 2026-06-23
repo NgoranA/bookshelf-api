@@ -60,7 +60,7 @@ export async function list({ ownerId, after = 0, limit = 20, status, q }) {
 // average rating. LEFT JOIN keeps the book even when it has zero reviews.
 export async function read(id, ownerId) {
   const { rows } = await db.query(
-    `SELECT b.id, b.title, b.author, b.genre, b.status, b.rating, b.created_at,
+    `SELECT b.id, b.title, b.author, b.genre, b.status, b.my_rating, b.created_at,
             COUNT(r.id)::int AS review_count,
             ROUND(AVG(r.rating), 2)::float8 AS average_review_rating
      FROM books b
@@ -75,13 +75,13 @@ export async function read(id, ownerId) {
   return rows[0]
 }
 
-export async function create({ title, author, genre, status, rating, ownerId }) {
+export async function create({ title, author, genre, status, my_rating, ownerId }) {
   try {
     const { rows } = await db.query(
-      `INSERT INTO books (owner_id, title, author, genre, status, rating)
+      `INSERT INTO books (owner_id, title, author, genre, status, my_rating)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING ${BOOK_COLUMNS}`,
-      [ownerId, title, author, genre ?? null, status, rating ?? null]
+      [ownerId, title, author, genre ?? null, status, my_rating ?? null]
     )
     return rows[0]
   } catch (err) {
@@ -93,14 +93,14 @@ export async function create({ title, author, genre, status, rating, ownerId }) 
 }
 
 // PUT = full replace. The client sends the whole book; every column is set.
-export async function replace(id, { title, author, genre, status, rating }, ownerId) {
+export async function replace(id, { title, author, genre, status, my_rating }, ownerId) {
   try {
     const { rows } = await db.query(
       `UPDATE books
-       SET title = $3, author = $4, genre = $5, status = $6, rating = $7
+       SET title = $3, author = $4, genre = $5, status = $6, my_rating = $7
        WHERE id = $1 AND owner_id = $2
        RETURNING ${BOOK_COLUMNS}`,
-      [id, ownerId, title, author, genre ?? null, status, rating ?? null]
+      [id, ownerId, title, author, genre ?? null, status, my_rating ?? null]
     )
     if (rows.length === 0) throw new Error('not found')
     return rows[0]

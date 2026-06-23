@@ -14,7 +14,7 @@ INSERT INTO users (email, password_hash) VALUES
 
 -- All the sample books belong to the demo user. We look its id up by email so we
 -- don't depend on it being exactly 1.
-INSERT INTO books (owner_id, title, author, genre, status, rating) VALUES
+INSERT INTO books (owner_id, title, author, genre, status, my_rating) VALUES
   ((SELECT id FROM users WHERE email = 'demo@bookshelf.test'), 'The Pragmatic Programmer', 'Andrew Hunt',              'Software',  'finished',     5),
   ((SELECT id FROM users WHERE email = 'demo@bookshelf.test'), 'Clean Code',               'Robert C. Martin',         'Software',  'reading',      NULL),
   ((SELECT id FROM users WHERE email = 'demo@bookshelf.test'), 'Things Fall Apart',        'Chinua Achebe',            'Fiction',   'finished',     4),

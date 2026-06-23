@@ -21,11 +21,11 @@ import { db } from '../src/db.js'
 const json = { 'content-type': 'application/json' }
 
 // Build the headers for an authenticated JSON request.
-function bearer (token) {
+function bearer(token) {
   return { 'content-type': 'application/json', authorization: `Bearer ${token}` }
 }
 
-function register (base, email, password) {
+function register(base, email, password) {
   return fetch(`${base}/auth/register`, {
     method: 'POST',
     headers: json,
@@ -33,7 +33,7 @@ function register (base, email, password) {
   })
 }
 
-async function login (base, email, password) {
+async function login(base, email, password) {
   const res = await fetch(`${base}/auth/login`, {
     method: 'POST',
     headers: json,
@@ -311,12 +311,12 @@ test('Bookshelf API contract', async (t) => {
     const res = await fetch(`${base}/books/${createdId}`, {
       method: 'PATCH',
       headers: bearer(aliceToken),
-      body: JSON.stringify({ status: 'finished', rating: 5 })
+      body: JSON.stringify({ status: 'finished', my_rating: 5 })
     })
     assert.equal(res.status, 200)
     const book = await res.json()
     assert.equal(book.status, 'finished')
-    assert.equal(book.rating, 5)
+    assert.equal(book.my_rating, 5)
     assert.equal(book.author, 'Kent Beck') // untouched field stays the same
   })
 

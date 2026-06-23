@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS books (
   genre       TEXT,
   status      TEXT        NOT NULL DEFAULT 'want_to_read'
                           CHECK (status IN ('want_to_read', 'reading', 'finished')),
-  rating      INTEGER     CHECK (rating BETWEEN 1 AND 5),
+  my_rating      INTEGER     CHECK (my_rating BETWEEN 1 AND 5),  -- the OWNER'S own score (≠ a review's rating)
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   -- Uniqueness is PER OWNER: two readers may each keep their own "Sapiens", but
   -- one reader can't add the same book twice. A duplicate raises error 23505,

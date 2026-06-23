@@ -329,7 +329,7 @@ components:
         author: { type: string }
         genre: { type: [string, 'null'] }
         status: { $ref: '#/components/schemas/Status' }
-        rating: { type: [integer, 'null'], minimum: 1, maximum: 5 }
+        my_rating: { type: [integer, 'null'], minimum: 1, maximum: 5 }
         created_at: { type: string, format: date-time }
 
     BookWithStats:
@@ -348,7 +348,7 @@ components:
         author: { type: string, minLength: 1, maxLength: 120 }
         genre: { type: string, minLength: 1, maxLength: 60 }
         status: { $ref: '#/components/schemas/Status' }
-        rating: { type: [integer, 'null'], minimum: 1, maximum: 5 }
+        my_rating: { type: [integer, 'null'], minimum: 1, maximum: 5 }
 
     UpdateBook:
       type: object
@@ -358,7 +358,7 @@ components:
         author: { type: string, minLength: 1, maxLength: 120 }
         genre: { type: [string, 'null'], minLength: 1, maxLength: 60 }
         status: { $ref: '#/components/schemas/Status' }
-        rating: { type: [integer, 'null'], minimum: 1, maximum: 5 }
+        my_rating: { type: [integer, 'null'], minimum: 1, maximum: 5 }
 
     Review:
       type: object

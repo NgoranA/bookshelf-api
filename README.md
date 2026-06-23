@@ -28,11 +28,11 @@ Create the two databases (dev + test). Pick whichever matches your machine:
 
 ```bash
 # If you can run createdb directly:
-createdb bookshelf
+createdb bookshelf_db
 createdb bookshelf_test
 
 # If your local Postgres uses the postgres/postgres login over TCP:
-PGPASSWORD=postgres psql -h localhost -U postgres -c 'CREATE DATABASE bookshelf;'
+PGPASSWORD=postgres psql -h localhost -U postgres -c 'CREATE DATABASE bookshelf_db;'
 PGPASSWORD=postgres psql -h localhost -U postgres -c 'CREATE DATABASE bookshelf_test;'
 ```
 
@@ -51,9 +51,9 @@ npm run dev                # auto-restarts on file changes (node --watch)
 npm start
 ```
 
-- API:    http://localhost:3000
-- Docs:   http://localhost:3000/docs  (interactive Swagger UI — **Authorize** with a login token)
-- Health: http://localhost:3000/health
+- API:    <http://localhost:3000>
+- Docs:   <http://localhost:3000/docs>  (interactive Swagger UI — **Authorize** with a login token)
+- Health: <http://localhost:3000/health>
 
 A demo account is seeded for you: **`demo@bookshelf.test` / `password123`** (it owns the
 sample shelf). Log in to get a token:
@@ -150,5 +150,39 @@ bookshelf-api/
 🔒 = requires `Authorization: Bearer <token>` (from `/auth/login`). A book that isn't yours
 returns **404** — private shelves don't reveal that it exists.
 
-See [`../docs/02-api-design.md`](../docs/02-api-design.md) for the full contract and
-[`../docs/04-cheatsheet.md`](../docs/04-cheatsheet.md) for copy-paste `curl` commands.
+See [`../docs/02-api-design.md`](../docs/02-api-design.md) for the full contract
+
+--
+
+## Going further (keep building after the session)
+
+Cloned this and finished the build? Don't stop here. [`docs/04-going-further.md`](docs/04-going-further.md)
+is a menu of **self-contained extensions** — each one builds on the *same* codebase, maps to a
+concept from the course notes, and is sized like a piece of homework. The loop is always the
+same: **pick one → read the matching chapter → build it → run `npm test` → commit.**
+
+A sensible order (easiest → hardest). The **§** column is the section to read in
+[`docs/04-going-further.md`](docs/05-going-further.md):
+
+| § | Extension | Level | What you'll add |
+| - | --------- | ----- | --------------- |
+| 1 | Cross-field & semantic validation | Easy | Zod `.refine()` rules that span fields (e.g. a `finished` book must have a `my_rating`) |
+| 2 | Conditional updates & the lost-update race | Medium | optimistic/pessimistic locking → `409` when two writers collide |
+| 5 | Validate requests against the OpenAPI spec | Medium | make the contract *executable* so the docs and code can't drift |
+| 7 | Continuous Integration | Medium | run the 37 tests automatically on every push (GitHub Actions) |
+| 9 | Mock the failure paths | Medium | force a DB error and prove it surfaces as a clean `500`, never a raw stack |
+| 8 | Caching & conditional requests | Medium–Hard | `ETag`/`304 Not Modified`, then a shared (Redis) cache |
+| 3 | Roles & permissions (RBAC) | Hard | an `admin` role and a real `403` — authorization *beyond* ownership |
+| 4 | Consume another service (BFF) | Hard | enrich a book from an external API with timeouts + honest `502`/`503` |
+| 6 | Real migrations | Hard | turn the Session-C schema change into versioned, forward-only migrations |
+
+**Where to start:** #1 is the gentlest on-ramp. Reach for **#6 (migrations)** once you want to
+change the schema on a database you *can't* drop — that's the real-world sequel to the
+`users` + `owner_id` change you made in Session C. Each entry in the doc includes the full
+explanation and starter code.
+
+> 🧭 Already built into this repo (so they're **not** in the list above): full CRUD, validation
+> (`400`/`422`), the bulk-import transaction, helmet/CORS/rate-limit, logging, and real accounts
+> with JWT + private shelves. *Going Further* is strictly what comes **next**.
+
+---
