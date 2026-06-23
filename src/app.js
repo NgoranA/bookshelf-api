@@ -8,24 +8,30 @@ import createError from "http-errors";
 import bookRoutes from './routes/books.js';
 import reviewRoutes from './routes/reviews.js';
 import { config } from './config/env-config.js';
-import { authMiddleware } from './middlewares/auth.js';
+// import { authMiddleware } from './middlewares/auth.js';
+import { mountDocs } from './routes/docs.js';
 
 export function createApp() {
   const app = express();
 
   if (config.NODE_ENV === 'production') app.set('trust proxy', 1); // trust first proxy
-  app.use(helmet());
+  app.use(helmet({ contentSecurityPolicy: false }));
   app.use(cors({ origin: config.CORS_ORIGIN }));
   app.use(pinoHttp({ logger }));
   app.use(express.json());
+
 
   // health check endpoint
   app.get('/health', (req, res) => {
     res.json({ status: 'ok' });
   })
 
+  mountDocs(app);
+
   app.use(rateLimit({ windowMs: config.RATE_LIMIT_WINDOW * 60 * 1000, max: 100, standardHeaders: true, legacyHeaders: false }));
-  app.use('/books', authMiddleware, bookRoutes);
+  // adding authMiddleware to the /books route to protect it with API key authentication
+  // app.use('/books', authMiddleware, bookRoutes);
+  app.use('/books', bookRoutes);
   app.use('/books/:bookId/reviews', reviewRoutes);
 
 

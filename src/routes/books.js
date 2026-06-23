@@ -1,11 +1,10 @@
 import { Router } from 'express';
 import createError from 'http-errors';
-import { importBooks, booklists, createBook, getBookById, updateBook, deleteBook, replaceBook } from '../models/books.js';
+import { importBooks, createBook, getBookById, updateBook, deleteBook, replaceBook } from '../models/books.js';
 
 import { parse } from '../lib/validate.js';
-import { idSchema, listQuerySchema, createBookSchema, updateBookSchema } from '../lib/schemas.js';
+import { idSchema, createBookSchema, updateBookSchema } from '../lib/schemas.js';
 import { booklistController } from '../controllers/books/booklists.js';
-import { authMiddleware } from '../middlewares/auth.js';
 
 const router = Router();
 
@@ -15,7 +14,7 @@ router.get('/:id', async (req, res) => {
   const id = parse(idSchema, req.params.id);
   try {
     const book = await getBookById(id);
-    res.json({ book });
+    res.json(book);
   } catch (error) {
     if (err.message === 'Book not found') throw createError(404, 'Book not found');
     throw error;

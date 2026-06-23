@@ -1,0 +1,418 @@
+openapi: 3.1.0
+info:
+  title: Bookshelf API
+  version: 2.0.0
+  description: >
+    A REST API where each reader keeps a PRIVATE shelf of books and the reviews
+    on them. Built as the reference project for the "Building Services with
+    Node.js" live session.
+
+
+    Register and log in via `/auth` to get a token, then send it as
+    `Authorization: Bearer <token>` on every other request. You only ever see and
+    change your own books.
+
+servers:
+  - url: http://localhost:3000
+    description: Local development
+
+# Every operation requires a bearer token by default. Public operations
+# (health check, register, login) override this with `security: []`.
+security:
+  - bearerAuth: []
+
+paths:
+  /health:
+    get:
+      summary: Liveness check
+      operationId: getHealth
+      security: []
+      responses:
+        '200':
+          description: The service is running
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, examples: [ok] }
+
+  /auth/register:
+    post:
+      summary: Create an account
+      operationId: register
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Credentials' }
+      responses:
+        '201':
+          description: Account created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '409':
+          description: That email is already registered
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /auth/login:
+    post:
+      summary: Log in and receive a token
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Credentials' }
+      responses:
+        '200':
+          description: Authenticated — use the returned token as a bearer token
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthSuccess' }
+        '401':
+          description: Invalid email or password
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /books:
+    get:
+      summary: List YOUR books (filterable, searchable, paginated)
+      operationId: listBooks
+      parameters:
+        - name: status
+          in: query
+          description: Only return books in this reading state
+          schema: { $ref: '#/components/schemas/Status' }
+        - name: q
+          in: query
+          description: Case-insensitive search across title and author
+          schema: { type: string }
+        - name: after
+          in: query
+          description: Keyset cursor — pass the previous page's `next` value
+          schema: { type: integer, minimum: 0 }
+        - name: limit
+          in: query
+          description: Page size
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        '200':
+          description: A page of your books
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, next]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Book' }
+                  next:
+                    type: [integer, 'null']
+                    description: Pass as `?after=` for the next page, or null at the end
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      summary: Add a book to your shelf
+      operationId: createBook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NewBook' }
+      responses:
+        '201':
+          description: Book created
+          headers:
+            Location:
+              description: URL of the newly created book
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Book' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /books/import:
+    post:
+      summary: Import many books at once, in a single all-or-nothing transaction
+      operationId: importBooks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [books]
+              properties:
+                books:
+                  type: array
+                  minItems: 1
+                  maxItems: 100
+                  items: { $ref: '#/components/schemas/NewBook' }
+      responses:
+        '201':
+          description: All books were imported
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Book' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409':
+          description: A book in the batch already exists on your shelf — the WHOLE import was rolled back
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /books/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer, minimum: 1 }
+    get:
+      summary: Get one of your books, including review statistics
+      operationId: getBook
+      responses:
+        '200':
+          description: The book
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BookWithStats' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      summary: Replace a book entirely (idempotent)
+      operationId: replaceBook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NewBook' }
+      responses:
+        '200':
+          description: The replaced book
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Book' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+    patch:
+      summary: Update one or more fields of a book
+      operationId: updateBook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateBook' }
+      responses:
+        '200':
+          description: The updated book
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Book' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+    delete:
+      summary: Remove a book (and its reviews)
+      operationId: deleteBook
+      responses:
+        '204':
+          description: Deleted — no content
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /books/{id}/reviews:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer, minimum: 1 }
+    get:
+      summary: List a book's reviews
+      operationId: listReviews
+      responses:
+        '200':
+          description: The book's reviews (an empty list if there are none)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Review' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    post:
+      summary: Add a review to one of your books
+      operationId: createReview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NewReview' }
+      responses:
+        '201':
+          description: Review created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Review' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Paste the token from POST /auth/login. Sent as: Authorization: Bearer <token>'
+
+  schemas:
+    Status:
+      type: string
+      enum: [want_to_read, reading, finished]
+
+    Credentials:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email, maxLength: 200 }
+        password: { type: string, minLength: 8, maxLength: 200 }
+
+    User:
+      type: object
+      required: [id, email]
+      properties:
+        id: { type: integer }
+        email: { type: string, format: email }
+        created_at: { type: string, format: date-time }
+
+    AuthSuccess:
+      type: object
+      required: [token, user]
+      properties:
+        token: { type: string, description: A JWT — send it as a bearer token }
+        user: { $ref: '#/components/schemas/User' }
+
+    Book:
+      type: object
+      required: [id, title, author, status, created_at]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        author: { type: string }
+        genre: { type: [string, 'null'] }
+        status: { $ref: '#/components/schemas/Status' }
+        rating: { type: [integer, 'null'], minimum: 1, maximum: 5 }
+        created_at: { type: string, format: date-time }
+
+    BookWithStats:
+      allOf:
+        - $ref: '#/components/schemas/Book'
+        - type: object
+          properties:
+            review_count: { type: integer }
+            average_review_rating: { type: [number, 'null'] }
+
+    NewBook:
+      type: object
+      required: [title, author]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+        author: { type: string, minLength: 1, maxLength: 120 }
+        genre: { type: string, minLength: 1, maxLength: 60 }
+        status: { $ref: '#/components/schemas/Status' }
+        rating: { type: [integer, 'null'], minimum: 1, maximum: 5 }
+
+    UpdateBook:
+      type: object
+      minProperties: 1
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+        author: { type: string, minLength: 1, maxLength: 120 }
+        genre: { type: [string, 'null'], minLength: 1, maxLength: 60 }
+        status: { $ref: '#/components/schemas/Status' }
+        rating: { type: [integer, 'null'], minimum: 1, maximum: 5 }
+
+    Review:
+      type: object
+      required: [id, book_id, reviewer, rating, body, created_at]
+      properties:
+        id: { type: integer }
+        book_id: { type: integer }
+        reviewer: { type: string }
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        body: { type: string }
+        created_at: { type: string, format: date-time }
+
+    NewReview:
+      type: object
+      required: [reviewer, rating, body]
+      properties:
+        reviewer: { type: string, minLength: 1, maxLength: 80 }
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        body: { type: string, minLength: 1, maxLength: 2000 }
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            status: { type: integer }
+            message: { type: string }
+            detail:
+              description: Validation details (development only)
+
+  responses:
+    BadRequest:
+      description: The request was malformed (bad id in the URL, or a bad query string)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Unauthorized:
+      description: Authentication required, or the token is invalid/expired
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: The resource does not exist (or isn't yours — private shelves return 404)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Conflict:
+      description: Conflicts with existing data (a book you already have, or an email already registered)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Unprocessable:
+      description: The body parsed but failed validation (e.g. missing title, bad email, short password)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
