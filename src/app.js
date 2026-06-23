@@ -8,6 +8,7 @@ import createError from "http-errors";
 import bookRoutes from './routes/books.js';
 import reviewRoutes from './routes/reviews.js';
 import { config } from './config/env-config.js';
+import { authMiddleware } from './middlewares/auth.js';
 
 export function createApp() {
   const app = express();
@@ -24,7 +25,7 @@ export function createApp() {
   })
 
   app.use(rateLimit({ windowMs: config.RATE_LIMIT_WINDOW * 60 * 1000, max: 100, standardHeaders: true, legacyHeaders: false }));
-  app.use('/books', bookRoutes);
+  app.use('/books', authMiddleware, bookRoutes);
   app.use('/books/:bookId/reviews', reviewRoutes);
 
 

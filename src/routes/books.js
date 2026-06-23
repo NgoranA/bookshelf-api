@@ -5,6 +5,7 @@ import { importBooks, booklists, createBook, getBookById, updateBook, deleteBook
 import { parse } from '../lib/validate.js';
 import { idSchema, listQuerySchema, createBookSchema, updateBookSchema } from '../lib/schemas.js';
 import { booklistController } from '../controllers/books/booklists.js';
+import { authMiddleware } from '../middlewares/auth.js';
 
 const router = Router();
 
