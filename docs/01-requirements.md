@@ -12,6 +12,7 @@ free. Changing it across 20 files is expensive.
 ## How to run the activity
 
 ### Step 1 — Pick the problem (2 min)
+
 Frame it in one sentence the whole room agrees on:
 
 > *"I want a service where I sign in to my own account and keep a private shelf of the books I
@@ -22,6 +23,7 @@ A relatable, bounded problem. (Swap the domain — a task list, a recipe box, a 
 watchlist — and the *shape* of the solution is identical.)
 
 ### Step 2 — Write user stories (5 min)
+
 Ask: *"As a reader, I want to ______ so that ______."* Collect ~8 on the board:
 
 - As a visitor, I want to **register** for an account, so I can have my own shelf.
@@ -51,9 +53,11 @@ real accounts with login here; roles/RBAC and password reset are great follow-up
 *Going Further*.)
 
 ### Step 4 — Define the data (5 min)
+
 Reuse their database skills. Three things to remember now: **users**, **books**, **reviews**.
 
 **User**
+
 | Field           | Type      | Rules                                       |
 | --------------- | --------- | ------------------------------------------- |
 | `id`            | integer   | assigned by the database                    |
@@ -62,6 +66,7 @@ Reuse their database skills. Three things to remember now: **users**, **books**,
 | `created_at`    | timestamp | set automatically                           |
 
 **Book** *(belongs to a user)*
+
 | Field        | Type      | Rules                                                       |
 | ------------ | --------- | ---------------------------------------------------------- |
 | `id`         | integer   | assigned by the database, read-only                        |
@@ -74,6 +79,7 @@ Reuse their database skills. Three things to remember now: **users**, **books**,
 | `created_at` | timestamp | set automatically                                          |
 
 **Review** *(a child of a book)*
+
 | Field       | Type    | Rules                              |
 | ----------- | ------- | ---------------------------------- |
 | `id`        | integer | assigned by the database          |
@@ -123,10 +129,5 @@ It must behave well and safely:
   `404` to you (we don't reveal it exists).
 - Return `404` when a book doesn't exist; never leak internal errors (like raw SQL).
 - Be reasonably hardened: security headers, CORS, and basic rate limiting, with structured logs.
-
-> 🧭 **Build note for the facilitator:** we don't build all of this on day one. Auth arrives in
-> two stages so it stays approachable — a simple shared **API key** first (Session B), then
-> **real accounts + private shelves** (Session C). The requirements above describe the
-> *finished* product.
 
 > Next: turn these into a precise API contract → [`02-api-design.md`](02-api-design.md).
